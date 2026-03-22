@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anaesth-Calc ZA — Clinical Calculators</title>
+  <style>
+    :root {
+      --primary:       #1d4ed8;
+      --primary-dark:  #1e3a8a;
+      --primary-light: #dbeafe;
+      --text:          #111827;
+      --text-muted:    #6b7280;
+      --border:        #e5e7eb;
+      --surface:       #ffffff;
+      --bg:            #f1f5f9;
+      --radius:        14px;
+      --shadow:        0 1px 4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #fff;
+      padding: 2.5rem 1.25rem 2.25rem;
+      text-align: center;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .875rem;
+    }
+
+    .oss-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-left: .5rem;
+    }
+
+    .oss-badge svg, .header-badge svg {
+      width: 13px;
+      height: 13px;
+      opacity: .9;
+    }
+
+    header h1 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      margin-bottom: .4rem;
+    }
+
+    header h1 span {
+      opacity: .7;
+      font-weight: 500;
+    }
+
+    header p {
+      font-size: .95rem;
+      opacity: .78;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── Main layout ─────────────────────────────────── */
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2rem 1rem 2.5rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* ── Section label ───────────────────────────────── */
+    .section-label {
+      font-size: .7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Calculator grid ─────────────────────────────── */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .875rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 420px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Calc card ───────────────────────────────────── */
+    .calc-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.375rem 1.25rem 1.25rem;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calc-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 18px rgba(29,78,216,.14);
+      transform: translateY(-2px);
+    }
+
+    .calc-card.available:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(3px);
+    }
+
+    .calc-card.coming-soon {
+      opacity: .72;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .calc-card.coming-soon:hover {
+      border-color: var(--border);
+      box-shadow: var(--shadow);
+      transform: none;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-light);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: .25rem;
+      flex-shrink: 0;
+    }
+
+    .card-icon svg {
+      width: 22px;
+      height: 22px;
+      color: var(--primary);
+    }
+
+    .coming-soon .card-icon {
+      background: #f3f4f6;
+    }
+
+    .coming-soon .card-icon svg {
+      color: var(--text-muted);
+    }
+
+    .card-name {
+      font-size: .975rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: .8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: .25rem;
+    }
+
+    .card-tag {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+    }
+
+    .tag-live {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-soon {
+      background: #f3f4f6;
+      color: var(--text-muted);
+    }
+
+    .card-arrow {
+      color: var(--primary);
+      opacity: .4;
+      transition: opacity .15s, transform .15s;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    /* ── Info cards ──────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .875rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 420px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
+    .info-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      display: flex;
+      gap: .875rem;
+      align-items: flex-start;
+    }
+
+    .info-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-icon.blue  { background: var(--primary-light); color: var(--primary); }
+    .info-icon.green { background: #dcfce7; color: #16a34a; }
+
+    .info-icon svg { width: 18px; height: 18px; }
+
+    .info-text strong {
+      display: block;
+      font-size: .85rem;
+      font-weight: 700;
+      margin-bottom: .2rem;
+    }
+
+    .info-text p {
+      font-size: .78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* ── Disclaimer ──────────────────────────────────── */
+    .disclaimer {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      font-size: .8rem;
+      color: #78350f;
+      line-height: 1.6;
+    }
+
+    .disclaimer-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: 800;
+      font-size: .82rem;
+      color: #92400e;
+      margin-bottom: .5rem;
+    }
+
+    .warn-icon {
+      width: 20px;
+      height: 20px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+
+    .footer-name {
+      font-size: .875rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .footer-meta {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-top: .2rem;
+    }
+
+    .footer-oss {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      margin-top: .625rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: var(--primary-light);
+      border-radius: 20px;
+      padding: .2rem .7rem;
+    }
+
+    .footer-oss svg { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header>
+    <div>
+      <span class="header-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        Anaesthesiology
+      </span>
+      <span class="oss-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+          <path d="M9 18c-4.51 2-5-2-7-2"/>
+        </svg>
+        Free &amp; Open Source
+      </span>
+    </div>
+    <h1>Anaesth-Calc <span>ZA</span></h1>
+    <p>Clinical calculators for South African anaesthetic private practice</p>
+  </header>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- Calculators -->
+    <div class="section-label">Calculators</div>
+    <div class="calc-grid">
+
+      <!-- PCA Calculator — Live -->
+      <a class="calc-card available" href="pca-calculator.html">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="m19 9-5 5-4-4-3 3"/>
+          </svg>
+        </div>
+        <div class="card-name">PCA Calculator</div>
+        <div class="card-desc">Patient-controlled analgesia syringe recipes for morphine, fentanyl, and oxycodone.</div>
+        <div class="card-footer">
+          <span class="card-tag tag-live">Live</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <!-- Caesar Spinal — Coming soon -->
+      <div class="calc-card coming-soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div class="card-name">Caesar Spinal Calculator</div>
+        <div class="card-desc">Intrathecal dosing for spinal anaesthesia in caesarean section.</div>
+        <div class="card-footer">
+          <span class="card-tag tag-soon">Coming Soon</span>
+        </div>
+      </div>
+
+      <!-- Infiltration Bag — Coming soon -->
+      <div class="calc-card coming-soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <div class="card-name">Infiltration Bag Calculator</div>
+        <div class="card-desc">Local anaesthetic infiltration bag mixtures for wound infusion catheters.</div>
+        <div class="card-footer">
+          <span class="card-tag tag-soon">Coming Soon</span>
+        </div>
+      </div>
+
+      <!-- Protocol Library — Coming soon -->
+      <div class="calc-card coming-soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+        </div>
+        <div class="card-name">Protocol Library</div>
+        <div class="card-desc">Standardised anaesthetic protocols and drug reference sheets.</div>
+        <div class="card-footer">
+          <span class="card-tag tag-soon">Coming Soon</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Info cards -->
+    <div class="section-label">About</div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="info-text">
+          <strong>Private Practice Focus</strong>
+          <p>Dosing ranges and defaults calibrated for South African private hospital practice.</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="info-text">
+          <strong>No Data Collected</strong>
+          <p>All calculations run locally in your browser. No patient data is transmitted or stored.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <div class="disclaimer-header">
+        <div class="warn-icon">!</div>
+        Clinical Decision Support — Not a Substitute for Clinical Judgement
+      </div>
+      These tools are intended to assist qualified anaesthesiologists and registered healthcare professionals.
+      All outputs must be verified against current clinical guidelines, patient-specific factors, and
+      applicable South African formulary standards before use. The author accepts no liability for clinical
+      decisions made in reliance on these calculators.
+    </div>
+
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-name">Dr FJ Coetzee</div>
+    <div class="footer-meta">MMed Anaesthesiology</div>
+    <div>
+      <span class="footer-oss">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+          <path d="M9 18c-4.51 2-5-2-7-2"/>
+        </svg>
+        Free &amp; Open Source
+      </span>
+    </div>
+  </footer>
+
+</body>
+</html>

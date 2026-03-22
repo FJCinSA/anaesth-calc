@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCA Calculator — Anaesth-Calc</title>
+  <style>
+    :root {
+      --primary:        #1d4ed8;
+      --primary-dark:   #1e3a8a;
+      --primary-light:  #dbeafe;
+      --text:           #111827;
+      --text-muted:     #6b7280;
+      --border:         #e5e7eb;
+      --surface:        #ffffff;
+      --bg:             #f1f5f9;
+      --radius:         14px;
+      --shadow:         0 1px 4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ───────────────────────────────────── */
+    header {
+      background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #fff;
+      padding: 2rem 1.25rem 1.75rem;
+      text-align: center;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+    }
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+    header p {
+      font-size: .9rem;
+      opacity: .75;
+      margin-top: .3rem;
+    }
+
+    /* ── Main layout ──────────────────────────────── */
+    main {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 2rem;
+    }
+
+    /* ── Card ─────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: .7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Form elements ────────────────────────────── */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group:last-of-type { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: .875rem;
+      font-weight: 600;
+      margin-bottom: .5rem;
+    }
+    label .hint {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: .8rem;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: .8rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color .15s, box-shadow .15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+    }
+
+    /* ── Drug selector ────────────────────────────── */
+    .drug-selector {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .drug-btn {
+      flex: 1;
+      padding: .875rem .75rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+      line-height: 1.35;
+    }
+    .drug-btn .drug-sub {
+      display: block;
+      font-size: .75rem;
+      font-weight: 400;
+      margin-top: .15rem;
+      opacity: .8;
+    }
+    .drug-btn.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+    .drug-btn.active .drug-sub { opacity: 1; }
+
+    /* ── Toggle buttons ───────────────────────────── */
+    .toggle-group { display: flex; gap: .5rem; }
+    .toggle-btn {
+      flex: 1;
+      padding: .75rem .5rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+    }
+    .toggle-btn.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    /* ── Procedure grid ───────────────────────────── */
+    .procedure-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem;
+    }
+    .proc-btn {
+      padding: .875rem .5rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .proc-btn.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    /* ── Calculate button ─────────────────────────── */
+    .calc-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .1s;
+      box-shadow: 0 4px 16px rgba(29,78,216,.38);
+      letter-spacing: .02em;
+      margin-top: .75rem;
+    }
+    .calc-btn:hover  { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(29,78,216,.44); }
+    .calc-btn:active { transform: translateY(0); }
+
+    /* ── Results ──────────────────────────────────── */
+    #results {
+      display: none;
+      animation: fadeUp .3s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Drug interaction warning ─────────────────── */
+    .bup-warning {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .bup-warning-header {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      font-weight: 800;
+      color: #92400e;
+      font-size: .9rem;
+      margin-bottom: .75rem;
+      line-height: 1.3;
+    }
+    .warn-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 900;
+      margin-top: .05rem;
+    }
+    .bup-warning ul {
+      padding-left: 1.25rem;
+      color: #78350f;
+      font-size: .85rem;
+    }
+    .bup-warning li { margin-bottom: .4rem; }
+
+    /* ── Syringe recipe table ─────────────────────── */
+    .recipe-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .recipe-table tr { border-bottom: 1px solid var(--border); }
+    .recipe-table tr:last-child { border-bottom: none; }
+    .recipe-table td {
+      padding: .7rem 0;
+      font-size: .9rem;
+      vertical-align: middle;
+    }
+    .recipe-table td:first-child {
+      color: var(--text-muted);
+      font-weight: 500;
+      width: 45%;
+    }
+    .recipe-table td:last-child {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .conc-pill {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 20px;
+      padding: .15rem .75rem;
+      font-size: .85rem;
+      font-weight: 700;
+    }
+    .conc-pill + .conc-pill { margin-left: .375rem; }
+
+    /* ── Pump settings grid ───────────────────────── */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+    .setting-tile {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem .875rem;
+      text-align: center;
+    }
+    .setting-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-muted);
+      margin-bottom: .375rem;
+    }
+    .setting-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #1e3a8a;
+      line-height: 1;
+    }
+    .setting-unit {
+      font-size: .78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: .25rem;
+    }
+    .setting-note {
+      font-size: .68rem;
+      color: var(--text-muted);
+      margin-top: .2rem;
+      line-height: 1.3;
+    }
+
+    /* ── Label output ─────────────────────────────── */
+    .label-wrap {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 1rem 1.125rem;
+      overflow-x: auto;
+    }
+    .label-text {
+      font-family: 'Courier New', 'Lucida Console', monospace;
+      font-size: .8rem;
+      line-height: 1.65;
+      color: var(--text);
+      white-space: pre;
+    }
+    .copy-btn {
+      width: 100%;
+      padding: .75rem;
+      background: var(--surface);
+      border: 1.5px solid var(--primary);
+      border-radius: 9px;
+      color: var(--primary);
+      font-size: .875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      margin-top: .75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      letter-spacing: .01em;
+    }
+    .copy-btn:hover  { background: var(--primary-light); }
+    .copy-btn.copied {
+      background: #ecfdf5;
+      border-color: #059669;
+      color: #059669;
+    }
+
+    /* ── Disclaimer ───────────────────────────────── */
+    .disclaimer {
+      text-align: center;
+      font-size: .73rem;
+      color: #9ca3af;
+      padding: 1rem .5rem;
+      line-height: 1.7;
+    }
+
+    /* ── Mobile ───────────────────────────────────── */
+    @media (max-width: 480px) {
+      header h1      { font-size: 1.5rem; }
+      .setting-value { font-size: 1.4rem; }
+      .card          { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Anaesth-Calc ZA</div>
+  <h1>PCA Calculator</h1>
+  <p>Patient-Controlled Analgesia &mdash; Private Practice</p>
+</header>
+
+<main>
+
+  <!-- ── INPUT CARD ─────────────────────────────────────── -->
+  <div class="card">
+
+    <!-- Drug selector -->
+    <label style="margin-bottom:.625rem">Drug Regimen</label>
+    <div class="drug-selector">
+      <button class="drug-btn active" onclick="setDrug('morphine', this)">
+        Morphine
+        <span class="drug-sub">50 mg / 50 mL &bull; 1 mg/mL</span>
+      </button>
+      <button class="drug-btn" onclick="setDrug('fentanyl_ketamine', this)">
+        Fentanyl + Ketamine
+        <span class="drug-sub">1000 mcg + 100 mg / 50 mL</span>
+      </button>
+    </div>
+
+    <div class="card-title">Patient Parameters</div>
+
+    <div class="form-group">
+      <label for="weight">Body Weight <span class="hint">(kg)</span></label>
+      <input type="number" id="weight" placeholder="e.g. 70" min="20" max="250" step="1">
+    </div>
+
+    <!-- Morphine-only fields -->
+    <div id="morphine-fields">
+      <div class="form-group">
+        <label>Opioid Status</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active"
+                  onclick="setToggle('opioidStatus','naive',this)">
+            Opioid Na&iuml;ve
+          </button>
+          <button class="toggle-btn"
+                  onclick="setToggle('opioidStatus','tolerant',this)">
+            Opioid Tolerant
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Procedure Type</label>
+        <div class="procedure-grid">
+          <button class="proc-btn active" onclick="setProcedure('minor',this)">
+            Minor<br><span style="font-size:.78rem;font-weight:400">Day case / peripheral</span>
+          </button>
+          <button class="proc-btn" onclick="setProcedure('major_abdominal',this)">
+            Major Abdominal<br><span style="font-size:.78rem;font-weight:400">Laparotomy / colorectal</span>
+          </button>
+          <button class="proc-btn" onclick="setProcedure('spinal_fusion',this)">
+            Spinal Fusion<br><span style="font-size:.78rem;font-weight:400">Instrumented spine</span>
+          </button>
+          <button class="proc-btn" onclick="setProcedure('caesar',this)">
+            Caesarean Section<br><span style="font-size:.78rem;font-weight:400">Obstetric</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Buprenorphine Patch</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active"
+                onclick="setToggle('bupStatus','none',this)">
+          Not Present
+        </button>
+        <button class="toggle-btn"
+                onclick="setToggle('bupStatus','present',this)">
+          Present
+        </button>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">Calculate PCA Settings</button>
+  </div>
+
+  <!-- ── RESULTS ────────────────────────────────────────── -->
+  <div id="results">
+
+    <!-- Buprenorphine warning -->
+    <div id="bup-warning" class="bup-warning" style="display:none">
+      <div class="bup-warning-header">
+        <div class="warn-icon">!</div>
+        DRUG INTERACTION &mdash; BUPRENORPHINE PATCH
+      </div>
+      <ul id="bup-warning-list">
+        <!-- populated by JS -->
+      </ul>
+    </div>
+
+    <!-- Syringe recipe -->
+    <div class="card">
+      <div class="card-title">Syringe Recipe</div>
+      <table class="recipe-table">
+        <tbody id="recipe-tbody">
+          <!-- populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pump settings -->
+    <div class="card">
+      <div class="card-title">Pump Settings</div>
+      <div class="settings-grid">
+        <div class="setting-tile">
+          <div class="setting-label">Demand Dose</div>
+          <div class="setting-value" id="r-demand">&mdash;</div>
+          <div class="setting-unit" id="r-demand-unit">&mdash;</div>
+          <div class="setting-note" id="r-demand-note"></div>
+        </div>
+        <div class="setting-tile">
+          <div class="setting-label">Lockout</div>
+          <div class="setting-value" id="r-lockout">&mdash;</div>
+          <div class="setting-unit">minutes</div>
+        </div>
+        <div class="setting-tile">
+          <div class="setting-label">Basal Rate</div>
+          <div class="setting-value" id="r-basal">&mdash;</div>
+          <div class="setting-unit" id="r-basal-unit">&mdash;</div>
+        </div>
+        <div class="setting-tile">
+          <div class="setting-label">4-Hour Max</div>
+          <div class="setting-value" id="r-4hr">&mdash;</div>
+          <div class="setting-unit" id="r-4hr-unit">&mdash;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label -->
+    <div class="card">
+      <div class="card-title">Syringe Label</div>
+      <div class="label-wrap">
+        <div class="label-text" id="label-text"></div>
+      </div>
+      <button class="copy-btn" id="copy-btn" onclick="copyLabel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy Label Text
+      </button>
+    </div>
+
+  </div><!-- /results -->
+
+  <div class="disclaimer">
+    Clinical decision support tool only &mdash; not a substitute for professional judgement.<br>
+    Verify all calculations independently before drug preparation and administration.<br>
+    &copy; 2026 Anaesth-Calc ZA &mdash; For use in South African private anaesthetic practice.
+  </div>
+
+</main>
+
+<script>
+  /* ── State ──────────────────────────────────────────── */
+  const state = {
+    drug:         'morphine',   // 'morphine' | 'fentanyl_ketamine'
+    opioidStatus: 'naive',      // 'naive' | 'tolerant'
+    bupStatus:    'none',       // 'none'  | 'present'
+    procedure:    'minor'       // 'minor' | 'major_abdominal' | 'spinal_fusion' | 'caesar'
+  };
+
+  /* ── UI helpers ─────────────────────────────────────── */
+  function setDrug(value, btn) {
+    state.drug = value;
+    document.querySelectorAll('.drug-btn')
+            .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Show/hide morphine-only fields
+    document.getElementById('morphine-fields').style.display =
+      value === 'morphine' ? '' : 'none';
+    // Hide results on drug change
+    document.getElementById('results').style.display = 'none';
+  }
+
+  function setToggle(key, value, btn) {
+    state[key] = value;
+    btn.closest('.toggle-group')
+       .querySelectorAll('.toggle-btn')
+       .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function setProcedure(value, btn) {
+    state.procedure = value;
+    document.querySelectorAll('.proc-btn')
+            .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function r05(v) { return Math.round(v / 0.5) * 0.5; }
+
+  /* ── Shared helpers ─────────────────────────────────── */
+  const SVG_COPY = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>`;
+  const SVG_CHECK = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>`;
+
+  function showResults() {
+    const el = document.getElementById('results');
+    el.style.display = 'block';
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
+
+  function resetCopyBtn() {
+    const btn = document.getElementById('copy-btn');
+    btn.classList.remove('copied');
+    btn.innerHTML = `${SVG_COPY} Copy Label Text`;
+  }
+
+  function buildRecipeRow(label, value) {
+    return `<tr><td>${label}</td><td>${value}</td></tr>`;
+  }
+
+  /* ── Main calculate ─────────────────────────────────── */
+  function calculate() {
+    const weight = parseFloat(document.getElementById('weight').value);
+    if (!weight || weight < 20 || weight > 250) {
+      alert('Please enter a valid patient weight (20\u2013250\u00a0kg).');
+      return;
+    }
+    if (state.drug === 'morphine') {
+      calculateMorphine(weight);
+    } else {
+      calculateFentanylKetamine(weight);
+    }
+    showResults();
+    resetCopyBtn();
+  }
+
+  /* ── Morphine PCA ───────────────────────────────────── */
+  function calculateMorphine(weight) {
+    const naive    = state.opioidStatus === 'naive';
+    const bupPatch = state.bupStatus    === 'present';
+    const proc     = state.procedure;
+
+    const morphineMg = 50;
+    const syringeVol = 50;
+    const conc       = 1;   // mg/mL
+
+    /* Demand dose */
+    let demand;
+    if (naive) {
+      demand = r05(Math.max(0.5, Math.min(1.0, weight * 0.015)));
+    } else {
+      demand = r05(Math.max(0.5, Math.min(2.0, weight * 0.02)));
+    }
+
+    /* Lockout */
+    const lockoutTable = {
+      minor:           { naive: 10, tolerant: 8 },
+      major_abdominal: { naive:  8, tolerant: 6 },
+      spinal_fusion:   { naive:  8, tolerant: 6 },
+      caesar:          { naive: 10, tolerant: 8 },
+    };
+    const lockout = lockoutTable[proc][naive ? 'naive' : 'tolerant'];
+
+    /* Basal */
+    let basal = 0;
+    if (!naive && proc !== 'caesar') {
+      basal = proc === 'minor' ? 0.5 : 1.0;
+      if (weight < 50) basal = Math.max(0.5, basal - 0.5);
+    }
+
+    /* 4-hour max */
+    const fourHrMaxTable = {
+      minor:           { naive:  8, tolerant: 15 },
+      major_abdominal: { naive: 10, tolerant: 20 },
+      spinal_fusion:   { naive: 10, tolerant: 20 },
+      caesar:          { naive:  8, tolerant: 12 },
+    };
+    const fourHrMax = fourHrMaxTable[proc][naive ? 'naive' : 'tolerant'];
+
+    /* Recipe table */
+    document.getElementById('recipe-tbody').innerHTML = [
+      buildRecipeRow('Drug', 'Morphine sulfate'),
+      buildRecipeRow('Amount', `${morphineMg}&nbsp;mg`),
+      buildRecipeRow('Diluent', '0.9% NaCl (Normal Saline)'),
+      buildRecipeRow('Total volume', `${syringeVol}&nbsp;mL`),
+      buildRecipeRow('Concentration',
+        `<span class="conc-pill">${conc.toFixed(1)}&nbsp;mg/mL</span>`),
+    ].join('');
+
+    /* Pump tiles */
+    document.getElementById('r-demand').textContent      = demand.toFixed(1);
+    document.getElementById('r-demand-unit').textContent = 'mg  /  mL';
+    document.getElementById('r-demand-note').textContent = '';
+    document.getElementById('r-lockout').textContent     = lockout;
+    document.getElementById('r-basal').textContent       = basal.toFixed(1);
+    document.getElementById('r-basal-unit').textContent  = 'mg / hr';
+    document.getElementById('r-4hr').textContent         = fourHrMax;
+    document.getElementById('r-4hr-unit').textContent    = 'mg';
+
+    /* Buprenorphine warning */
+    showBupWarning(bupPatch, 'morphine');
+
+    /* Label */
+    const today = new Date().toLocaleDateString('en-ZA',
+      { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const procLabel = {
+      minor:           'Minor / Day Case',
+      major_abdominal: 'Major Abdominal',
+      spinal_fusion:   'Spinal Fusion',
+      caesar:          'Caesarean Section',
+    }[proc];
+    const sep = '\u2500'.repeat(34);
+    const volPerDemand = (demand / conc).toFixed(1);
+
+    let lines = [
+      'MORPHINE PCA',
+      sep,
+      `Drug:    Morphine sulfate ${morphineMg} mg`,
+      `Diluent: 0.9% NaCl (Normal Saline)`,
+      `Volume:  ${syringeVol} mL`,
+      `Conc:    ${conc.toFixed(1)} mg/mL`,
+      sep,
+      'PUMP SETTINGS',
+      `Demand:  ${demand.toFixed(1)} mg  (${volPerDemand} mL)`,
+      `Lockout: ${lockout} min`,
+      `Basal:   ${basal.toFixed(1)} mg/hr`,
+      `4hr Max: ${fourHrMax} mg`,
+      sep,
+      `Procedure: ${procLabel}`,
+      `Weight:  ${weight} kg   ${naive ? 'Opioid na\u00efve' : 'Opioid tolerant'}`,
+    ];
+    if (bupPatch) {
+      lines.push(sep);
+      lines.push('** BUPRENORPHINE PATCH PRESENT **');
+      lines.push('   Monitor for reduced PCA efficacy');
+    }
+    lines.push(sep);
+    lines.push(`Date:    ${today}`);
+    lines.push(`Prep by: ${'_'.repeat(22)}`);
+    lines.push(`Checked: ${'_'.repeat(22)}`);
+
+    document.getElementById('label-text').textContent = lines.join('\n');
+  }
+
+  /* ── Fentanyl + Ketamine PCA ────────────────────────── */
+  function calculateFentanylKetamine(weight) {
+    const bupPatch = state.bupStatus === 'present';
+
+    /* Fixed recipe */
+    const fentMcg    = 1000;
+    const ketMg      = 100;
+    const syringeVol = 50;
+    const fentConc   = 20;   // mcg/mL
+    const ketConc    = 2;    // mg/mL
+
+    /* Fixed pump settings */
+    const demand    = 1;    // mL
+    const lockout   = 5;    // min
+    const basal     = 0;    // mL/hr
+    const fourHrMax = 12;   // mL
+
+    /* Recipe table */
+    document.getElementById('recipe-tbody').innerHTML = [
+      buildRecipeRow('Drug 1', 'Fentanyl'),
+      buildRecipeRow('Amount 1', `${fentMcg}&nbsp;mcg`),
+      buildRecipeRow('Drug 2', 'Ketamine'),
+      buildRecipeRow('Amount 2', `${ketMg}&nbsp;mg`),
+      buildRecipeRow('Diluent', '0.9% NaCl (Normal Saline)'),
+      buildRecipeRow('Total volume', `${syringeVol}&nbsp;mL`),
+      buildRecipeRow('Concentration',
+        `<span class="conc-pill">${fentConc}&nbsp;mcg/mL&nbsp;Fent</span>` +
+        `<span class="conc-pill">${ketConc}&nbsp;mg/mL&nbsp;Ket</span>`),
+    ].join('');
+
+    /* Pump tiles */
+    document.getElementById('r-demand').textContent      = demand.toFixed(1);
+    document.getElementById('r-demand-unit').textContent = 'mL per dose';
+    document.getElementById('r-demand-note').textContent =
+      `${fentMcg / syringeVol * demand}\u00a0mcg Fent + ${ketMg / syringeVol * demand}\u00a0mg Ket`;
+    document.getElementById('r-lockout').textContent     = lockout;
+    document.getElementById('r-basal').textContent       = basal.toFixed(1);
+    document.getElementById('r-basal-unit').textContent  = 'mL / hr';
+    document.getElementById('r-4hr').textContent         = fourHrMax;
+    document.getElementById('r-4hr-unit').textContent    = 'mL';
+
+    /* Buprenorphine warning */
+    showBupWarning(bupPatch, 'fentanyl_ketamine');
+
+    /* Label */
+    const today = new Date().toLocaleDateString('en-ZA',
+      { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const sep = '\u2500'.repeat(34);
+
+    let lines = [
+      'FENTANYL + KETAMINE PCA',
+      sep,
+      `Drug 1:  Fentanyl ${fentMcg} mcg`,
+      `Drug 2:  Ketamine ${ketMg} mg`,
+      `Diluent: 0.9% NaCl (Normal Saline)`,
+      `Volume:  ${syringeVol} mL`,
+      `Conc:    Fentanyl ${fentConc} mcg/mL`,
+      `         Ketamine ${ketConc} mg/mL`,
+      sep,
+      'PUMP SETTINGS',
+      `Demand:  ${demand.toFixed(1)} mL`,
+      `         (${fentConc * demand} mcg Fent + ${ketConc * demand} mg Ket)`,
+      `Lockout: ${lockout} min`,
+      `Basal:   ${basal.toFixed(1)} mL/hr`,
+      `4hr Max: ${fourHrMax} mL`,
+      sep,
+      `Weight:  ${weight} kg`,
+    ];
+    if (bupPatch) {
+      lines.push(sep);
+      lines.push('** BUPRENORPHINE PATCH PRESENT **');
+      lines.push('   Monitor for reduced PCA efficacy');
+    }
+    lines.push(sep);
+    lines.push(`Date:    ${today}`);
+    lines.push(`Prep by: ${'_'.repeat(22)}`);
+    lines.push(`Checked: ${'_'.repeat(22)}`);
+
+    document.getElementById('label-text').textContent = lines.join('\n');
+  }
+
+  /* ── Buprenorphine warning ──────────────────────────── */
+  function showBupWarning(show, drug) {
+    const box = document.getElementById('bup-warning');
+    box.style.display = show ? 'block' : 'none';
+    if (!show) return;
+
+    const isMorphine = drug === 'morphine';
+    const items = [
+      `Buprenorphine is a <strong>partial &mu;-opioid agonist</strong> with exceptionally high receptor affinity. At therapeutic patch concentrations it can competitively antagonise full agonists${isMorphine ? ' such as morphine' : ' including fentanyl'}.`,
+      `Discuss <strong>patch removal before surgery</strong> with the prescribing clinician where clinically appropriate. Removal 12&ndash;24&nbsp;h pre-operatively reduces plasma levels appreciably.`,
+      `If the patch is retained, anticipate <strong>reduced PCA efficacy</strong>. Demand dose may require upward titration under close nursing and anaesthesiologist supervision.`,
+      isMorphine
+        ? `Consider <strong>fentanyl PCA</strong> as an alternative &mdash; its high intrinsic efficacy may partially overcome receptor competition.`
+        : `Fentanyl has higher intrinsic efficacy than morphine but is still subject to competitive antagonism; enhanced monitoring remains essential.`,
+      `Ensure enhanced post-operative pain monitoring and document the interaction clearly in the anaesthetic record and nursing handover.`,
+    ];
+    document.getElementById('bup-warning-list').innerHTML =
+      items.map(i => `<li>${i}</li>`).join('');
+  }
+
+  /* ── Copy label ─────────────────────────────────────── */
+  async function copyLabel() {
+    const text = document.getElementById('label-text').textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = text;
+      Object.assign(el.style, { position: 'fixed', opacity: '0', top: '0', left: '0' });
+      document.body.appendChild(el);
+      el.focus(); el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    const btn = document.getElementById('copy-btn');
+    btn.classList.add('copied');
+    btn.innerHTML = `${SVG_CHECK} Copied to Clipboard`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `${SVG_COPY} Copy Label Text`;
+    }, 2500);
+  }
+</script>
+
+</body>
+</html>
