@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drug Formulary — Anaesth-Calc ZA</title>
+  <style>
+    :root {
+      --primary:       #1d4ed8;
+      --primary-dark:  #1e3a8a;
+      --primary-light: #dbeafe;
+      --text:          #111827;
+      --text-muted:    #6b7280;
+      --border:        #e5e7eb;
+      --surface:       #ffffff;
+      --bg:            #f1f5f9;
+      --radius:        14px;
+      --shadow:        0 1px 4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    header {
+      background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #fff;
+      padding: 2rem 1.25rem 1.75rem;
+      text-align: center;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background .15s;
+    }
+    .header-badge:hover { background: rgba(255,255,255,.25); }
+
+    header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -.03em; }
+    header p   { font-size: .9rem; opacity: .75; margin-top: .3rem; }
+
+    /* ── Sticky search + tabs ────────────────────────────── */
+    .sticky-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .75rem 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .search-wrap { position: relative; margin-bottom: .625rem; }
+
+    .search-icon {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px;
+      height: 17px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    #search {
+      width: 100%;
+      padding: .65rem 1rem .65rem 2.4rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: .95rem;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #search:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+    }
+
+    .tabs {
+      display: flex;
+      gap: .375rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 1px;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex-shrink: 0;
+      padding: .3rem .8rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      font-size: .775rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .tab.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+
+    /* ── Main ────────────────────────────────────────────── */
+    main {
+      max-width: 940px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+
+    .result-count {
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-bottom: .875rem;
+      font-weight: 500;
+    }
+
+    /* ── Drug grid ───────────────────────────────────────── */
+    .drug-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (max-width: 600px) {
+      .drug-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Drug card ───────────────────────────────────────── */
+    .drug-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.125rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .drug-card.has-highlight { border-color: var(--primary); }
+
+    /* Card header */
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+
+    .drug-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .drug-subclass {
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: .15rem;
+      line-height: 1.35;
+    }
+
+    .cat-badge {
+      flex-shrink: 0;
+      font-size: .63rem;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+      margin-top: .1rem;
+    }
+
+    .badge-induction    { background: #ede9fe; color: #5b21b6; }
+    .badge-opioids      { background: #fce7f3; color: #9d174d; }
+    .badge-nmb          { background: #fef3c7; color: #92400e; }
+    .badge-reversal     { background: #d1fae5; color: #065f46; }
+    .badge-local        { background: #e0f2fe; color: #0c4a6e; }
+    .badge-vasopressors { background: #fee2e2; color: #991b1b; }
+    .badge-adjuncts     { background: #ecfdf5; color: #065f46; }
+
+    /* Dose section */
+    .section-title {
+      font-size: .63rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+
+    .dose-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .2rem .625rem;
+      font-size: .8rem;
+      line-height: 1.45;
+      padding: .275rem 0;
+      border-bottom: 1px solid #f3f4f6;
+      align-items: baseline;
+    }
+    .dose-row:last-child { border-bottom: none; }
+
+    .dose-label {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: .75rem;
+      white-space: nowrap;
+    }
+
+    .dose-value { font-weight: 600; color: var(--text); }
+
+    /* Recipe box */
+    .recipe-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .55rem .875rem;
+      font-size: .775rem;
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    .recipe-label {
+      font-size: .62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: .2rem;
+    }
+
+    /* FJC Highlight box */
+    .highlight-box {
+      background: #eff6ff;
+      border: 1.5px solid #3b82f6;
+      border-radius: 9px;
+      padding: .75rem .875rem;
+    }
+
+    .highlight-label {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .63rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--primary);
+      margin-bottom: .375rem;
+    }
+
+    .highlight-label::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: var(--primary);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .highlight-content {
+      font-size: .82rem;
+      color: #1e3a8a;
+      font-weight: 600;
+      line-height: 1.55;
+    }
+
+    /* Notes */
+    .notes {
+      font-size: .775rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* No results */
+    #no-results {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 3rem 1rem;
+      font-size: .9rem;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: var(--radius);
+      padding: 1.125rem 1.25rem;
+      font-size: .78rem;
+      color: #78350f;
+      line-height: 1.65;
+      margin-top: 2rem;
+    }
+
+    .disclaimer-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: 800;
+      font-size: .8rem;
+      color: #92400e;
+      margin-bottom: .375rem;
+    }
+
+    .warn-icon {
+      width: 18px;
+      height: 18px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.5rem; }
+      .sticky-bar { padding: .6rem .75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="header-badge" href="index.html">&#8592; Anaesth-Calc ZA</a>
+  <h1>Drug Formulary</h1>
+  <p>Common anaesthetic drugs, doses &amp; infusion recipes &mdash; SA private practice</p>
+</header>
+
+<!-- ── Sticky search + tabs ── -->
+<div class="sticky-bar">
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="search" id="search" placeholder="Search drugs, classes, notes&hellip;"
+           oninput="filterDrugs()" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active"   onclick="setCategory('all',this)">All</button>
+    <button class="tab"          onclick="setCategory('induction',this)">Induction</button>
+    <button class="tab"          onclick="setCategory('opioids',this)">Opioids</button>
+    <button class="tab"          onclick="setCategory('nmb',this)">Muscle Relaxants</button>
+    <button class="tab"          onclick="setCategory('reversal',this)">Reversal</button>
+    <button class="tab"          onclick="setCategory('local',this)">Local Anaesthetics</button>
+    <button class="tab"          onclick="setCategory('vasopressors',this)">Vasopressors</button>
+    <button class="tab"          onclick="setCategory('adjuncts',this)">Adjuncts</button>
+  </div>
+</div>
+
+<main>
+  <p class="result-count" id="result-count"></p>
+  <div class="drug-grid" id="drug-grid"></div>
+  <div id="no-results" style="display:none">No drugs match your search.</div>
+
+  <div class="disclaimer">
+    <div class="disclaimer-header">
+      <div class="warn-icon">!</div>
+      Clinical Decision Support &mdash; Verify All Doses Independently
+    </div>
+    Doses are for adults unless otherwise stated, based on standard South African private practice
+    references. Always adjust for patient-specific factors (weight, age, renal/hepatic function,
+    comorbidities). Not a substitute for clinical judgement or current formulary guidelines.
+    &copy; 2026 Anaesth-Calc ZA &mdash; Dr FJ Coetzee, MMed Anaesthesiology.
+  </div>
+</main>
+
+<script>
+  /* ── Category labels ────────────────────────────────── */
+  const CAT_LABEL = {
+    induction:    'Induction',
+    opioids:      'Opioid',
+    nmb:          'NMB',
+    reversal:     'Reversal',
+    local:        'Local Anaes.',
+    vasopressors: 'Vasopressor',
+    adjuncts:     'Adjunct',
+  };
+
+  /* ── Drug data ──────────────────────────────────────── */
+  const drugs = [
+
+    /* ═══════════════  INDUCTION AGENTS  ═══════════════ */
+    {
+      name: 'Propofol',
+      category: 'induction',
+      cls: 'IV Anaesthetic (alkylphenol)',
+      doses: [
+        { label: 'Induction (adult)',   value: '1.5–2.5 mg/kg IV — titrate in 40 mg aliquots q10s' },
+        { label: 'Elderly / ASA III–IV', value: '0.5–1.5 mg/kg IV — reduce and titrate slowly' },
+        { label: 'TIVA maintenance',    value: '4–12 mg/kg/hr (titrate to depth of anaesthesia)' },
+        { label: 'Sedation',            value: '0.5–4 mg/kg/hr IV' },
+      ],
+      recipe: 'Available 10 mg/mL (1%). TIVA syringe pump: use neat or dilute to 5 mg/mL in 5% dextrose (max 6 hr per syringe). Strict aseptic preparation — no preservative.',
+      notes: 'Pretreat with IV lidocaine 20–40 mg to reduce injection pain. Apnoea common — have airway equipment ready. Propofol infusion syndrome (PRIS) risk with prolonged infusion >4 mg/kg/hr for >48 hr.',
+    },
+    {
+      name: 'Thiopentone',
+      category: 'induction',
+      cls: 'IV Barbiturate',
+      doses: [
+        { label: 'Induction (adult)',  value: '3–7 mg/kg IV — reduce and titrate in elderly/debilitated' },
+        { label: 'RSI (obstetric)',    value: '5–7 mg/kg IV' },
+      ],
+      recipe: 'Reconstitute to 2.5% (25 mg/mL) with sterile water. Highly alkaline (pH ~10.5) — use immediately. Do not mix with other drugs in same syringe.',
+      notes: 'ABSOLUTELY CONTRAINDICATED in acute porphyria. Laryngospasm risk — ensure adequate depth before laryngoscopy. Tissue necrosis on extravasation; intra-arterial injection causes distal ischaemia (papaverine + sympathetic block). Not for maintenance.',
+    },
+    {
+      name: 'Ketamine',
+      category: 'induction',
+      cls: 'Dissociative Anaesthetic / NMDA Antagonist',
+      doses: [
+        { label: 'Induction IV',       value: '1–2 mg/kg IV' },
+        { label: 'Induction IM',       value: '4–6 mg/kg IM' },
+        { label: 'Analgesic bolus',    value: '0.1–0.5 mg/kg IV' },
+        { label: 'Analgesic infusion', value: '0.1–0.3 mg/kg/hr IV (see Adjuncts)' },
+      ],
+      recipe: 'Available 10, 50, 100 mg/mL. Analgesic infusion: 500 mg in 500 mL NS = 1 mg/mL. Rate (mL/hr) = dose (mg/kg/hr) × weight.',
+      notes: 'Sympathomimetic — preserves haemodynamics in hypovolaemia/shock. Bronchodilator. Airway reflexes relatively preserved (not absolute — secure airway as clinically indicated). Avoid/caution: raised ICP, uncontrolled hypertension, active psychosis. Pretreat with midazolam 0.02–0.05 mg/kg to reduce emergence dysphoria.',
+    },
+    {
+      name: 'Etomidate',
+      category: 'induction',
+      cls: 'Imidazole IV Anaesthetic',
+      doses: [
+        { label: 'Induction (adult)', value: '0.2–0.3 mg/kg IV' },
+      ],
+      recipe: 'Available 2 mg/mL. Use undiluted.',
+      notes: 'Haemodynamically stable induction — agent of choice in cardiovascular compromise. Single dose causes adrenocortical suppression for ~24 hr — AVOID in sepsis or critically ill patients. Myoclonus common. Pain on injection (propylene glycol vehicle). Not for maintenance.',
+    },
+    {
+      name: 'Midazolam',
+      category: 'induction',
+      cls: 'Benzodiazepine',
+      doses: [
+        { label: 'Premedication IV',    value: '0.02–0.05 mg/kg IV (1–2.5 mg adults; titrate)' },
+        { label: 'Oral premedication',  value: '7.5–15 mg PO, 30–60 min preoperatively' },
+        { label: 'Co-induction',        value: '0.02–0.05 mg/kg IV before propofol (reduces propofol requirement ~25%)' },
+        { label: 'Sedation',            value: '0.5–2.5 mg IV titrated slowly' },
+      ],
+      recipe: 'Available 1 mg/mL, 5 mg/mL. Dilute for IV sedation infusion.',
+      notes: 'Amnestic, anxiolytic, anticonvulsant. Respiratory depression — have flumazenil available. Exaggerated and prolonged effect in elderly, hepatic impairment, hypoalbuminaemia. Context-sensitive — accumulates with prolonged infusion.',
+    },
+
+    /* ═══════════════  OPIOIDS  ═════════════════════════ */
+    {
+      name: 'Fentanyl',
+      category: 'opioids',
+      cls: 'Synthetic Opioid (μ agonist)',
+      doses: [
+        { label: 'Co-induction / intubation', value: '1–3 mcg/kg IV, 3–5 min before laryngoscopy' },
+        { label: 'Maintenance bolus',         value: '0.5–1.5 mcg/kg IV prn' },
+        { label: 'Infusion',                  value: '1–3 mcg/kg/hr' },
+      ],
+      recipe: 'Available 50 mcg/mL. Infusion: 500 mcg in 50 mL NS = 10 mcg/mL. Rate (mL/hr) = dose (mcg/kg/hr) × weight / 10.',
+      notes: 'Rapid onset 2–5 min. Context-sensitive half-life increases substantially with infusion >4 hr. Chest wall rigidity at high doses or rapid injection — have NMB available. Accumulates in fat with prolonged infusion.',
+    },
+    {
+      name: 'Morphine',
+      category: 'opioids',
+      cls: 'Opioid (μ agonist)',
+      doses: [
+        { label: 'Intraoperative bolus', value: '0.05–0.15 mg/kg IV (titrate)' },
+        { label: 'Recovery (titrated)',  value: '0.025–0.05 mg/kg IV q5–10 min to effect' },
+        { label: 'Infusion',             value: '0.01–0.05 mg/kg/hr' },
+        { label: 'PCA',                  value: 'See PCA Calculator' },
+      ],
+      recipe: 'PCA standard: 50 mg in 50 mL NS = 1 mg/mL. See PCA Calculator for full settings.',
+      notes: 'Active metabolite M6G accumulates in renal impairment — reduce dose/frequency. Histamine release at high bolus doses — avoid in severe asthma or haemodynamic instability. Give early (30–45 min before end) to allow onset before emergence.',
+    },
+    {
+      name: 'Remifentanil (TCI)',
+      category: 'opioids',
+      cls: 'Ultra-short Opioid (μ agonist)',
+      doses: [
+        { label: 'TCI — Induction',         value: 'Ce 4–6 ng/mL (Minto model)' },
+        { label: 'TCI — Maintenance',       value: 'Ce 2–4 ng/mL (titrate to haemodynamic response)' },
+        { label: 'Procedural sedation',     value: 'Ce 1–3 ng/mL' },
+        { label: 'Manual infusion',         value: '0.05–0.2 mcg/kg/min' },
+      ],
+      recipe: 'Reconstitute: 5 mg vial + 1 mL sterile water → dilute further. Standard: 2 mg in 50 mL NS = 40 mcg/mL. TCI pump requires Minto model (enter weight + age). Stable at room temp for 24 hr once reconstituted.',
+      notes: 'Metabolised by plasma esterases — offset complete 3–5 min regardless of infusion duration. MUST have transition analgesia in place before stopping (IV morphine/nerve block/NSAID). Opioid-induced hyperalgesia (OIH) risk with prolonged high-dose infusion. Bradycardia and hypotension common — dose-dependent. Ideal for TIVA with propofol.',
+    },
+    {
+      name: 'Alfentanil',
+      category: 'opioids',
+      cls: 'Synthetic Opioid (μ agonist)',
+      doses: [
+        { label: 'Induction supplement', value: '10–50 mcg/kg IV' },
+        { label: 'Bolus maintenance',    value: '5–15 mcg/kg IV prn' },
+        { label: 'Infusion',             value: '0.5–3 mcg/kg/min' },
+      ],
+      recipe: 'Available 500 mcg/mL. Infusion: 5 mg in 50 mL NS = 100 mcg/mL.',
+      notes: 'Rapid onset, shorter context-sensitive half-life than fentanyl for procedures <1 hr. Useful for brief high-stimulus events (laryngoscopy, skin incision). Metabolised by CYP3A4 — interactions with azole antifungals, erythromycin.',
+    },
+    {
+      name: 'Oxycodone IV',
+      category: 'opioids',
+      cls: 'Semi-synthetic Opioid (μ, κ agonist)',
+      doses: [
+        { label: 'Intraoperative / recovery', value: '0.05–0.1 mg/kg IV (titrate slowly)' },
+      ],
+      recipe: 'Available 10 mg/mL. Dilute 1:10 with NS for IV titration.',
+      notes: 'Similar efficacy to morphine, less histamine release. Active metabolite oxymorphone. Adjust dose in hepatic/renal impairment. Useful postoperative analgesic for patients who tolerate morphine poorly.',
+    },
+    {
+      name: 'Pethidine (Meperidine)',
+      category: 'opioids',
+      cls: 'Opioid (μ agonist)',
+      doses: [
+        { label: 'Post-anaesthetic shivering', value: '25 mg IV (most common current indication)' },
+        { label: 'Analgesic',                  value: '0.5–1 mg/kg IV/IM' },
+      ],
+      recipe: 'Available 50 mg/mL. Dilute before IV administration.',
+      notes: 'Largely superseded by other opioids. Toxic metabolite norpethidine accumulates with repeated doses — seizures, CNS excitation. ABSOLUTELY CONTRAINDICATED with MAOIs (serotonin syndrome, potentially fatal). Low-dose IV (25 mg) remains used for post-anaesthetic shivering.',
+    },
+
+    /* ═══════════════  MUSCLE RELAXANTS  ════════════════ */
+    {
+      name: 'Suxamethonium',
+      category: 'nmb',
+      cls: 'Depolarising NMB (acetylcholine analogue)',
+      doses: [
+        { label: 'RSI / intubation (IV)', value: '1–1.5 mg/kg IV' },
+        { label: 'RSI (IM — no IV access)', value: '4 mg/kg IM (neonates/infants)' },
+      ],
+      recipe: 'Available 50 mg/mL. Use undiluted. Onset 60 s, duration 10–15 min.',
+      notes: 'CONTRAINDICATED: burns/crush/denervation >48 hr, personal or family history of malignant hyperthermia, Duchenne/Becker muscular dystrophy, hyperkalaemia, pseudocholinesterase deficiency. Fasciculations — pretreat with rocuronium 0.06 mg/kg 3 min prior. Phase 2 block with repeated large doses.',
+    },
+    {
+      name: 'Rocuronium',
+      category: 'nmb',
+      cls: 'Non-depolarising NMB (aminosteroid)',
+      doses: [
+        { label: 'Intubation (standard)', value: '0.6–0.9 mg/kg IV (onset 60–90 s)' },
+        { label: 'RSI (sux equivalent)', value: '1.2 mg/kg IV (onset ~60 s)' },
+        { label: 'Maintenance bolus',    value: '0.15 mg/kg IV (TOF-guided)' },
+        { label: 'Infusion',             value: '0.3–0.6 mg/kg/hr' },
+      ],
+      recipe: 'Available 10 mg/mL. Store in fridge 2–8°C (stable 12 wk at room temp). Infusion: 500 mg in 50 mL = 10 mg/mL.',
+      notes: 'Fully reversible at any depth with sugammadex — makes 1.2 mg/kg RSI viable. Duration dose-dependent: 0.6 mg/kg ~30 min; 1.2 mg/kg ~70 min. Hepatic elimination — prolonged in liver disease. Compatible with NS, 5% dextrose.',
+    },
+    {
+      name: 'Vecuronium',
+      category: 'nmb',
+      cls: 'Non-depolarising NMB (aminosteroid)',
+      doses: [
+        { label: 'Intubation',          value: '0.1 mg/kg IV (onset 2–3 min)' },
+        { label: 'Maintenance bolus',   value: '0.02–0.05 mg/kg IV prn' },
+      ],
+      recipe: 'Powder for reconstitution: add 5 mL sterile water to 10 mg vial = 2 mg/mL. Use within 24 hr.',
+      notes: 'Intermediate duration (~30–40 min at intubating dose). Hepatic metabolism/biliary excretion — prolonged in liver disease. Minimal cardiovascular effects. Reversible with sugammadex or neostigmine (at moderate block).',
+    },
+    {
+      name: 'Cisatracurium',
+      category: 'nmb',
+      cls: 'Non-depolarising NMB (benzylisoquinolinium)',
+      doses: [
+        { label: 'Intubation',   value: '0.15–0.2 mg/kg IV (onset 2–3 min)' },
+        { label: 'Infusion',     value: '1–3 mcg/kg/min' },
+      ],
+      recipe: 'Available 2 mg/mL. Infusion: 150 mg in 250 mL NS = 0.6 mg/mL. Store in fridge.',
+      notes: 'Hofmann elimination (temperature and pH dependent — independent of organ function). Agent of choice in hepatic or renal failure. No histamine release. Reversible with neostigmine (NOT sugammadex). Laudanosine metabolite — negligible at routine doses.',
+    },
+    {
+      name: 'Atracurium',
+      category: 'nmb',
+      cls: 'Non-depolarising NMB (benzylisoquinolinium)',
+      doses: [
+        { label: 'Intubation',         value: '0.5–0.6 mg/kg IV' },
+        { label: 'Maintenance bolus',  value: '0.1–0.2 mg/kg IV prn' },
+        { label: 'Infusion',           value: '5–10 mcg/kg/min' },
+      ],
+      recipe: 'Available 10 mg/mL. Store in fridge. Infusion: 500 mg in 250 mL NS = 2 mg/mL.',
+      notes: 'Hofmann elimination + ester hydrolysis. Histamine release at doses >0.5 mg/kg — flushing and hypotension. Laudanosine accumulation with prolonged infusion/renal failure. Reversible with neostigmine (NOT sugammadex).',
+    },
+
+    /* ═══════════════  REVERSAL AGENTS  ═════════════════ */
+    {
+      name: 'Sugammadex',
+      category: 'reversal',
+      cls: 'Selective Relaxant Binding Agent (γ-cyclodextrin)',
+      doses: [
+        { label: 'Moderate block (TOF ≥2)',                   value: '2 mg/kg IV' },
+        { label: 'Deep block (PTC 1–2)',                      value: '4 mg/kg IV' },
+        { label: 'Immediate reversal (after 1.2 mg/kg roc)', value: '16 mg/kg IV' },
+      ],
+      recipe: 'Available 200 mg/2 mL. Administer undiluted as rapid IV bolus.',
+      notes: 'Encapsulates rocuronium and vecuronium only — NOT effective for suxamethonium or benzylisoquinoliniums. No anticholinergic required. Verify complete reversal with TOF monitor. Bradycardia reported. AVOID in severe renal failure (GFR <30) — complex not renally cleared. Recurrence of block possible if underdosed.',
+    },
+    {
+      name: 'Neostigmine',
+      category: 'reversal',
+      cls: 'Anticholinesterase',
+      doses: [
+        { label: 'Neostigmine',         value: '0.04–0.07 mg/kg IV (max 5 mg)' },
+        { label: 'With glycopyrrolate', value: '0.01 mg/kg IV (max 0.4 mg) — give first or simultaneously' },
+        { label: 'With atropine',       value: '0.02 mg/kg IV (alternative to glycopyrrolate)' },
+      ],
+      recipe: 'Draw neostigmine and glycopyrrolate in separate syringes. Give glycopyrrolate first, then neostigmine.',
+      notes: 'Effective ONLY at moderate block (TOF ≥2 twitches) — CEILING EFFECT, cannot reverse deep block. Muscarinic effects (bradycardia, bronchospasm, secretions) — always give with anticholinergic. Allow 5–10 min and verify TOF ratio ≥0.9 before extubation. Glycopyrrolate preferred (no BBB crossing, less tachycardia).',
+    },
+    {
+      name: 'Flumazenil',
+      category: 'reversal',
+      cls: 'Benzodiazepine Antagonist',
+      doses: [
+        { label: 'Reversal of sedation', value: '0.2 mg IV; repeat 0.1 mg q1 min to max 1 mg' },
+      ],
+      recipe: 'Available 0.1 mg/mL. Use undiluted.',
+      notes: 'Short half-life (~1 hr) — resedation likely if long-acting benzodiazepine used. Observe patient ≥2 hr post-reversal. May precipitate acute withdrawal seizures in benzodiazepine-dependent patients. Not recommended for routine reversal — reserve for respiratory emergency.',
+    },
+    {
+      name: 'Naloxone',
+      category: 'reversal',
+      cls: 'Opioid Antagonist (competitive)',
+      doses: [
+        { label: 'Respiratory depression (titrated)', value: '0.04 mg IV q2–3 min (preserve analgesia) — max 0.4 mg' },
+        { label: 'Full reversal (emergency)',         value: '0.4 mg IV' },
+        { label: 'Infusion (if recurrence expected)', value: '2/3 of effective IV dose per hour' },
+      ],
+      recipe: 'Available 0.4 mg/mL. Dilute to 0.04 mg/mL (1 mL + 9 mL NS) for titrated dosing.',
+      notes: 'Duration 30–90 min — shorter than most opioids; renarcotisation possible. Full rapid reversal causes acute pain, hypertension, sympathetic surge, pulmonary oedema, arrhythmias — always titrate. Prepare infusion if using long-acting opioids.',
+    },
+
+    /* ═══════════════  LOCAL ANAESTHETICS  ══════════════ */
+    {
+      name: 'Bupivacaine',
+      category: 'local',
+      cls: 'Amide Local Anaesthetic (long-acting, racemic)',
+      doses: [
+        { label: 'Spinal (heavy 0.5%)',       value: '7.5–15 mg in 8.25% dextrose — dose per level/surgery' },
+        { label: 'Spinal (isobaric 0.5%)',    value: '10–15 mg' },
+        { label: 'Epidural',                  value: '0.125–0.5%, 15–20 mL; top-up 6–10 mL prn' },
+        { label: 'Peripheral nerve block',    value: '0.25–0.5%, max 2 mg/kg plain / 3 mg/kg with adrenaline' },
+        { label: 'Max total dose',            value: '150 mg plain / 200 mg with adrenaline' },
+      ],
+      notes: 'Long-acting (~4–8 hr nerve block). Significant cardiotoxicity risk — treat LAST (Local Anaesthetic Systemic Toxicity) with Intralipid 20%: 1.5 mL/kg IV bolus then 15 mL/kg/hr infusion. Use ultrasound guidance for peripheral blocks. Never give IV.',
+    },
+    {
+      name: 'Levobupivacaine',
+      category: 'local',
+      cls: 'Amide Local Anaesthetic (long-acting, S-enantiomer)',
+      doses: [
+        { label: 'Epidural',                value: '0.125–0.5%, 15–20 mL' },
+        { label: 'Peripheral nerve block',  value: '0.25–0.5%, max 150 mg' },
+        { label: 'Wound infiltration',      value: '0.25–0.5%, max 150 mg' },
+      ],
+      notes: 'S-enantiomer of bupivacaine — similar clinical profile but less cardiotoxic and less CNS toxic. Preferred over racemic bupivacaine where available. Same LAST precautions apply — have Intralipid 20% immediately available.',
+    },
+    {
+      name: 'Ropivacaine',
+      category: 'local',
+      cls: 'Amide Local Anaesthetic (long-acting)',
+      doses: [
+        { label: 'Epidural',               value: '0.2–0.75%, 15–20 mL' },
+        { label: 'Peripheral nerve block', value: '0.375–0.75%, max 250 mg (3 mg/kg)' },
+        { label: 'Wound infusion catheter',value: '0.2% at 4–10 mL/hr via elastomeric pump' },
+        { label: 'Spinal (off-label)',      value: '15–20 mg (0.5–0.75% isobaric)' },
+      ],
+      recipe: 'Wound infusion: 400 mg in 200 mL (2 mg/mL) or 200 mg in 100 mL (2 mg/mL) via elastomeric pump. Stable 24 hr at room temp.',
+      notes: 'Reduced cardiotoxicity and less motor block vs bupivacaine — preferred for epidural labour analgesia and peripheral blocks. Slower onset than bupivacaine. Same LAST precautions apply.',
+      highlight: true,
+      highlightLabel: 'FJC Intrathecal Protocol — Caesarean Section',
+      highlightContent: 'Ropivacaine 16–18 mg + Fentanyl 20 mcg + Dexmedetomidine 10 mcg + MgSO\u2084 50 mg — prepared in a single syringe under strict aseptic technique and administered intrathecally.',
+    },
+    {
+      name: 'Lidocaine (Lignocaine)',
+      category: 'local',
+      cls: 'Amide Local Anaesthetic (intermediate-acting)',
+      doses: [
+        { label: 'Infiltration',           value: '0.5–1%, max 4 mg/kg plain / 7 mg/kg with adrenaline' },
+        { label: 'Topical airway',         value: '2–4% spray/gel; max 3 mg/kg' },
+        { label: 'IV analgesic — loading', value: '1.5 mg/kg IV over 10 min at induction' },
+        { label: 'IV analgesic — infusion',value: '1–2 mg/kg/hr intraoperatively' },
+        { label: 'Antiarrhythmic bolus',   value: '1–1.5 mg/kg IV; infusion 1–4 mg/min' },
+        { label: 'Pre-propofol (pain)',    value: '20–40 mg IV' },
+      ],
+      recipe: 'IV analgesic infusion: 500 mg in 500 mL NS = 1 mg/mL. Rate (mL/hr) = dose (mg/kg/hr) × weight.',
+      notes: 'Systemic IV lidocaine reduces intraoperative opioid requirements (~25–30%), PONV, and time to bowel recovery (colorectal/abdominal surgery). Monitor for toxicity: perioral tingling, tinnitus, confusion, seizures. Therapeutic plasma: 1.5–5 mcg/mL.',
+    },
+    {
+      name: 'Prilocaine',
+      category: 'local',
+      cls: 'Amide Local Anaesthetic',
+      doses: [
+        { label: 'Infiltration / peripheral block', value: '0.5–2%, max 6 mg/kg plain / 9 mg/kg with adrenaline' },
+        { label: 'Spinal (hyperbaric 5%)',           value: '40–80 mg (short procedures)' },
+      ],
+      notes: 'EMLA cream (prilocaine + lidocaine) for topical anaesthesia. Metabolite ortho-toluidine causes methaemoglobinaemia at high doses — treat with methylene blue 1–2 mg/kg IV. Lowest cardiotoxicity of amide LAs. Hyperbaric prilocaine gaining favour for short ambulatory spinals (rapid, reliable offset).',
+    },
+
+    /* ═══════════════  VASOPRESSORS  ════════════════════ */
+    {
+      name: 'Ephedrine',
+      category: 'vasopressors',
+      cls: 'Mixed \u03b1/\u03b2 Sympathomimetic (indirect)',
+      doses: [
+        { label: 'Bolus', value: '3–6 mg IV (repeat prn; max ~30 mg total)' },
+        { label: 'Infusion', value: '30 mg in 500 mL NS = 60 mcg/mL; titrate to MAP' },
+      ],
+      recipe: 'Bolus syringe: 30 mg in 10 mL NS = 3 mg/mL. Infusion: 30 mg in 500 mL NS = 60 mcg/mL.',
+      notes: 'Good first-line vasopressor for spinal hypotension. Tachyphylaxis with repeated doses (indirect mechanism). Crosses placenta — may cause fetal tachycardia; phenylephrine preferred in obstetrics. Caution: hypertension, IHD, hyperthyroidism.',
+    },
+    {
+      name: 'Phenylephrine',
+      category: 'vasopressors',
+      cls: 'Pure \u03b11 Agonist',
+      doses: [
+        { label: 'Bolus',   value: '50–100 mcg IV' },
+        { label: 'Infusion',value: '25–100 mcg/min — start at 25–50 mcg/min' },
+      ],
+      recipe: 'Bolus syringe: 1 mg in 10 mL NS = 100 mcg/mL. Infusion: 10 mg in 250 mL NS = 40 mcg/mL. Rate (mL/hr) = desired dose (mcg/min) \u00d7 1.5.',
+      notes: 'Preferred vasopressor for obstetric spinal hypotension (preserves uteroplacental perfusion, less fetal acidosis vs ephedrine). Reflex bradycardia common — have atropine ready. No inotropic effect — avoid as sole agent in cardiogenic shock.',
+    },
+    {
+      name: 'Metaraminol',
+      category: 'vasopressors',
+      cls: 'Mixed \u03b1/\u03b2 Sympathomimetic (predominantly \u03b1)',
+      doses: [
+        { label: 'Bolus',   value: '0.5–2 mg IV' },
+        { label: 'Infusion',value: '10 mg in 500 mL NS = 20 mcg/mL; titrate to MAP' },
+      ],
+      recipe: 'Bolus syringe: 10 mg in 20 mL NS = 0.5 mg/mL. Infusion: 10 mg in 500 mL NS = 20 mcg/mL.',
+      notes: 'Longer duration than phenylephrine. Good for general/neuraxial anaesthesia hypotension. Less reflex bradycardia than phenylephrine. Some tachyphylaxis (indirect component). Tissue necrosis on significant extravasation.',
+    },
+    {
+      name: 'Noradrenaline (Norepinephrine)',
+      category: 'vasopressors',
+      cls: 'Catecholamine (\u03b11 > \u03b21)',
+      doses: [
+        { label: 'Infusion', value: '0.01–0.5 mcg/kg/min — titrate to MAP 65–70 mmHg' },
+      ],
+      recipe: '4 mg in 250 mL 5% dextrose = 16 mcg/mL. Rate (mL/hr) = dose (mcg/kg/min) \u00d7 weight (kg) \u00d7 60 \u00f7 16. Alternative: 8 mg in 250 mL = 32 mcg/mL. DEDICATED lumen required.',
+      notes: 'First-line vasopressor for distributive/septic shock. Potent vasoconstriction with mild inotropy. Central line strongly preferred — extravasation causes severe tissue necrosis. Short-term peripheral use (large-bore antecubital) acceptable with close observation. Compatible with 5% dextrose and NS.',
+    },
+    {
+      name: 'Adrenaline (Epinephrine)',
+      category: 'vasopressors',
+      cls: 'Catecholamine (\u03b1 + \u03b2 agonist)',
+      doses: [
+        { label: 'Anaphylaxis (IM)',               value: '0.5 mg IM (1:1000) anterolateral thigh — repeat q5–10 min' },
+        { label: 'Cardiovascular collapse (IV)',    value: '0.05–0.1 mg IV (1:10 000) titrated slowly' },
+        { label: 'Cardiac arrest (ALS)',            value: '1 mg IV q3–5 min' },
+        { label: 'Infusion',                        value: '0.01–0.5 mcg/kg/min' },
+      ],
+      recipe: 'Infusion: 4 mg in 250 mL 5% dextrose = 16 mcg/mL. Rate (mL/hr) = dose (mcg/kg/min) \u00d7 weight \u00d7 60 \u00f7 16. For 1:10 000 bolus: dilute 1 mg to 10 mL NS.',
+      notes: 'First-line for anaphylaxis — IM preferred over IV in non-arrested patient. At low doses (\u22640.1 mcg/kg/min) \u03b2 effects predominate. At higher doses \u03b1 effects predominate. Hyperglycaemia, arrhythmias, myocardial ischaemia at high doses.',
+    },
+    {
+      name: 'Vasopressin',
+      category: 'vasopressors',
+      cls: 'Non-catecholamine Vasopressor (V1 receptor)',
+      doses: [
+        { label: 'Infusion (septic shock adjunct)', value: '0.03–0.04 units/min (fixed dose, not weight-based)' },
+      ],
+      recipe: '20 units in 500 mL NS = 0.04 units/mL. Run at 22–30 mL/hr to deliver 0.03–0.04 units/min. Alternatively: 20 units in 100 mL NS = 0.2 units/mL at 9–12 mL/hr.',
+      notes: 'Non-catecholamine — acts at V1 receptors regardless of catecholamine receptor downregulation. Used as adjunct to noradrenaline in refractory distributive shock to allow noradrenaline dose reduction. Mesenteric/cutaneous ischaemia at high doses. Central line required.',
+    },
+    {
+      name: 'Dopamine',
+      category: 'vasopressors',
+      cls: 'Catecholamine (dose-dependent receptor effects)',
+      doses: [
+        { label: 'Low — dopaminergic',       value: '2–5 mcg/kg/min' },
+        { label: 'Moderate — \u03b21 inotropy', value: '5–10 mcg/kg/min' },
+        { label: 'High — \u03b11 vasopressor',  value: '10–20 mcg/kg/min' },
+      ],
+      recipe: '400 mg in 250 mL NS = 1.6 mg/mL. Rate (mL/hr) = dose (mcg/kg/min) \u00d7 weight \u00d7 60 \u00f7 1600.',
+      notes: '"Renal dose" dopamine is NOT evidence-based — does not preserve renal function. Higher arrhythmia risk vs noradrenaline. Largely displaced by noradrenaline in distributive shock. Still used in some post-cardiac surgery low output states.',
+    },
+    {
+      name: 'Dobutamine',
+      category: 'vasopressors',
+      cls: 'Synthetic Catecholamine (\u03b21 > \u03b22)',
+      doses: [
+        { label: 'Infusion', value: '2.5–20 mcg/kg/min (titrate to haemodynamic response)' },
+      ],
+      recipe: '250 mg in 250 mL NS = 1 mg/mL. Rate (mL/hr) = dose (mcg/kg/min) \u00d7 weight \u00d7 60 \u00f7 1000.',
+      notes: 'Positive inotrope — increases cardiac contractility and heart rate. For cardiogenic shock, low cardiac output states. Tachycardia and arrhythmias common. \u03b22 vasodilation may cause hypotension in hypovolaemic patients — often combined with vasopressor.',
+    },
+
+    /* ═══════════════  ADJUNCTS  ════════════════════════ */
+    {
+      name: 'Dexmedetomidine',
+      category: 'adjuncts',
+      cls: 'Selective \u03b12 Agonist',
+      doses: [
+        { label: 'Loading dose',            value: '0.5–1 mcg/kg IV over 10–20 min (omit or halve in elderly / haemodynamically compromised)' },
+        { label: 'Maintenance infusion',    value: '0.2–0.7 mcg/kg/hr' },
+        { label: 'Awake fibreoptic adjunct',value: '0.5–1 mcg/kg loading; maintenance 0.2–0.5 mcg/kg/hr' },
+      ],
+      recipe: '200 mcg in 50 mL NS = 4 mcg/mL (neat 200 mcg/2 mL vials). Alternative: 200 mcg in 200 mL = 1 mcg/mL.',
+      notes: 'Sedation with analgesia and minimal respiratory depression ("cooperative sedation" — responds to voice). Reduces anaesthetic and opioid requirements. Loading dose causes bradycardia and hypotension — infuse slowly, have atropine/vasopressor available. Do NOT use as sole agent for surgical anaesthesia.',
+    },
+    {
+      name: 'Ketamine (Sub-dissociative Infusion)',
+      category: 'adjuncts',
+      cls: 'NMDA Antagonist Analgesic',
+      doses: [
+        { label: 'Analgesic bolus', value: '0.1–0.5 mg/kg IV' },
+        { label: 'Infusion',        value: '0.1–0.3 mg/kg/hr' },
+      ],
+      recipe: '500 mg in 500 mL NS = 1 mg/mL. Rate (mL/hr) = dose (mg/kg/hr) × weight.',
+      notes: 'Opioid-sparing — particularly useful in opioid-tolerant patients, chronic pain, spine surgery. Reduces opioid-induced hyperalgesia when co-infused with remifentanil. Antisialogogue (glycopyrrolate 0.2 mg IV) may be needed. Midazolam 0.02 mg/kg IV if emergence dysphoria a concern.',
+    },
+    {
+      name: 'Lidocaine IV Infusion (Systemic)',
+      category: 'adjuncts',
+      cls: 'Systemic LA / Analgesic / Anti-inflammatory',
+      doses: [
+        { label: 'Loading dose',   value: '1.5 mg/kg IV over 10 min at / before induction' },
+        { label: 'Maintenance',    value: '1–2 mg/kg/hr intraoperatively; may continue 24 hr postop' },
+      ],
+      recipe: '500 mg in 500 mL NS = 1 mg/mL. Rate (mL/hr) = dose (mg/kg/hr) × weight.',
+      notes: 'Reduces intraoperative opioid consumption, PONV, and ileus — especially benefit in colorectal/abdominal surgery. Stop immediately if any sign of toxicity (perioral tingling, tinnitus, confusion). Therapeutic level 1.5–5 mcg/mL. Discontinue before discharge in day cases.',
+    },
+    {
+      name: 'Magnesium Sulfate',
+      category: 'adjuncts',
+      cls: 'NMDA Antagonist / Anticonvulsant / Tocolytic',
+      doses: [
+        { label: 'Analgesic loading',   value: '30–50 mg/kg IV over 10–15 min' },
+        { label: 'Analgesic infusion',  value: '10–15 mg/kg/hr' },
+        { label: 'Eclampsia loading',   value: '4 g IV over 20 min' },
+        { label: 'Eclampsia infusion',  value: '1–2 g/hr' },
+        { label: 'Bronchospasm',        value: '2 g IV over 20 min' },
+      ],
+      recipe: '10 g in 500 mL NS = 20 mg/mL. Eclampsia loading: 4 g = 200 mL of 20 mg/mL over 20 min. Maintenance: 1 g/hr = 50 mL/hr of 20 mg/mL.',
+      notes: 'Opioid-sparing — reduces NMB requirements (reduce NMB doses and monitor TOF closely). TOXICITY: patellar reflex loss (3.5–5 mmol/L) → respiratory arrest (>5 mmol/L) → cardiac arrest (>7 mmol/L). ANTIDOTE: calcium gluconate 10% 10 mL IV (1 g). Monitor serum levels in prolonged infusion/renal impairment.',
+    },
+    {
+      name: 'Tranexamic Acid',
+      category: 'adjuncts',
+      cls: 'Antifibrinolytic (lysine analogue)',
+      doses: [
+        { label: 'Elective surgery (induction)', value: '1–2 g IV over 10 min' },
+        { label: 'Maintenance (major surgery)',  value: '1 g IV over 8 hr' },
+        { label: 'Trauma (\u22643 hr of injury)',     value: '1 g IV over 10 min, then 1 g over 8 hr' },
+        { label: 'Obstetric (PPH prevention)',   value: '1 g IV at delivery' },
+      ],
+      recipe: 'Available 500 mg/5 mL (100 mg/mL). Dilute in 100–250 mL NS for infusion. Give loading dose over 10 min to reduce nausea.',
+      notes: 'Reduces perioperative blood loss and transfusion (CRASH-2, WOMAN trial). CAUTION: high-dose in neurosurgery — dose-dependent seizure risk. Avoid in active thromboembolic disease, haematuria from upper urinary tract (ureteric clot obstruction). Caution in severe renal impairment (accumulation).',
+    },
+    {
+      name: 'Dexamethasone',
+      category: 'adjuncts',
+      cls: 'Glucocorticoid',
+      doses: [
+        { label: 'PONV prophylaxis',        value: '4–8 mg IV at induction' },
+        { label: 'Anti-inflammatory',       value: '0.1–0.2 mg/kg IV' },
+        { label: 'Airway oedema',           value: '0.1–0.2 mg/kg IV (preoperative + postoperative)' },
+        { label: 'Nerve block adjuvant',    value: '4–8 mg IV systemically (prolongs block duration)' },
+      ],
+      notes: 'Most effective PONV prophylaxis when combined with ondansetron (additive — different mechanisms). Hyperglycaemia — monitor BGL in diabetics (peak 4–6 hr postoperatively). Single perioperative dose does not meaningfully suppress HPA axis or increase surgical infection risk.',
+    },
+    {
+      name: 'Ondansetron',
+      category: 'adjuncts',
+      cls: '5HT\u2083 Antagonist (Antiemetic)',
+      doses: [
+        { label: 'PONV prophylaxis', value: '4–8 mg IV at end of surgery' },
+        { label: 'Treatment of PONV',value: '4 mg IV (at least 6 hr after prophylactic dose)' },
+      ],
+      notes: 'Most effective as prophylaxis — combine with dexamethasone for additive effect. QTc prolongation — use 4 mg when co-prescribing other QT-prolonging drugs. Headache is a common side effect. Give 4 mg if >6 hr since last dose — not effective as repeat rescue if refractory.',
+    },
+    {
+      name: 'Droperidol',
+      category: 'adjuncts',
+      cls: 'Butyrophenone Antipsychotic (Antiemetic)',
+      doses: [
+        { label: 'PONV prophylaxis', value: '0.625–1.25 mg IV at end of surgery' },
+      ],
+      notes: 'Potent antiemetic at low doses. QTc prolongation — avoid in pre-existing long QT or hypokalaemia. Extrapyramidal effects possible. Dysphoria at higher doses. Excellent addition to multimodal PONV prophylaxis — different mechanism from ondansetron and dexamethasone.',
+    },
+    {
+      name: 'Metoclopramide',
+      category: 'adjuncts',
+      cls: 'Dopamine Antagonist / Prokinetic (Antiemetic)',
+      doses: [
+        { label: 'PONV / gastric prokinesis', value: '10 mg IV slowly (over 3–5 min)' },
+      ],
+      notes: 'Prokinetic — increases LOS tone, promotes gastric emptying. Rapid IV injection causes acute dysphoria/restlessness. Extrapyramidal/dystonic reactions — more common in young women (treat with diphenhydramine). Less antiemetic efficacy than ondansetron. Avoid with other dopamine-blocking drugs.',
+    },
+    {
+      name: 'Parecoxib',
+      category: 'adjuncts',
+      cls: 'COX-2 Selective NSAID (prodrug of valdecoxib)',
+      doses: [
+        { label: 'Dose', value: '40 mg IV/IM at induction or intraoperatively; repeat 40 mg q12 hr (max 80 mg/day)' },
+      ],
+      recipe: 'Reconstitute with 2 mL NS or 5% dextrose = 20 mg/mL. Use within 24 hr of reconstitution.',
+      notes: 'Opioid-sparing, anti-inflammatory. AVOID within 6 hr of cardiac bypass surgery, significant cardiovascular disease, active PUD. CAUTION in elderly (reduce to 40 mg/day max), renal impairment (avoid GFR <30), hepatic impairment. First-choice IV NSAID in many private practice multimodal regimens.',
+    },
+    {
+      name: 'Ketorolac',
+      category: 'adjuncts',
+      cls: 'Non-selective NSAID (parenteral)',
+      doses: [
+        { label: 'Adults <65 yr, >50 kg',                   value: '30 mg IV/IM' },
+        { label: 'Adults \u226565 yr / renal impairment / <50 kg', value: '15 mg IV/IM' },
+        { label: 'Maximum duration',                         value: '5 days combined (IV + oral); max 120 mg/day adult' },
+      ],
+      notes: 'Potent analgesic (comparable to 10 mg morphine IV). Non-selective — platelet inhibition, GI risk. AVOID: active PUD, coagulopathy, significant renal impairment, post-cardiac surgery, aspirin-sensitive asthma. Short-term use for acute pain only.',
+    },
+    {
+      name: 'Paracetamol IV',
+      category: 'adjuncts',
+      cls: 'Non-opioid Analgesic / Antipyretic',
+      doses: [
+        { label: 'Adults >50 kg',           value: '1 g IV over 15 min q4–6 hr (max 4 g/day)' },
+        { label: 'Adults <50 kg / frail',   value: '15 mg/kg IV q6 hr (max 60 mg/kg/day, not exceeding 3 g/day)' },
+        { label: 'Paediatric',              value: '15 mg/kg IV q4–6 hr (max 60 mg/kg/day)' },
+      ],
+      recipe: 'Perfalgan 10 mg/mL in 100 mL bag. Administer undiluted over 15 min via IV line.',
+      notes: 'Opioid-sparing — background analgesic in all multimodal regimens. Safe across most populations. Minimal contraindications (severe hepatic failure, known hypersensitivity). Total daily dose includes ALL routes (IV + oral + rectal combined). Continue scheduled postoperatively.',
+    },
+    {
+      name: 'Atropine',
+      category: 'adjuncts',
+      cls: 'Muscarinic Antagonist (tertiary amine)',
+      doses: [
+        { label: 'Bradycardia (adult)',    value: '0.6 mg IV; repeat to max 3 mg' },
+        { label: 'Paediatric bradycardia', value: '0.02 mg/kg IV (min 0.1 mg, max 0.5 mg)' },
+        { label: 'Antisialogogue (preop)', value: '0.3–0.6 mg IV; or 0.01 mg/kg IM 30–60 min preop' },
+      ],
+      notes: 'Crosses BBB — central anticholinergic syndrome at high doses (confusion, delirium). Paradoxical bradycardia possible at very low IV doses (<0.1 mg) due to central vagal stimulation. Less preferred than glycopyrrolate as antisialogogue (more tachycardia, crosses BBB).',
+    },
+    {
+      name: 'Glycopyrrolate (Glycopyrronium)',
+      category: 'adjuncts',
+      cls: 'Quaternary Anticholinergic',
+      doses: [
+        { label: 'With neostigmine', value: '0.01 mg/kg IV (max 0.4 mg) — give first or simultaneously' },
+        { label: 'Antisialogogue',   value: '0.2–0.4 mg IV/IM' },
+        { label: 'Bradycardia',      value: '0.2–0.4 mg IV' },
+      ],
+      notes: 'Quaternary amine — does NOT cross BBB (no CNS effects, preferred over atropine as antisialogogue). Does not cross placenta. Longer duration than atropine (~2–4 hr). Less tachycardia than atropine for equivalent antisialogogue effect.',
+    },
+
+  ]; /* end drugs array */
+
+  /* ── State ──────────────────────────────────────────── */
+  let currentCategory = 'all';
+  let currentSearch   = '';
+
+  /* ── Category filter ────────────────────────────────── */
+  function setCategory(cat, btn) {
+    currentCategory = cat;
+    document.querySelectorAll('.tab')
+            .forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  /* ── Search filter ──────────────────────────────────── */
+  function filterDrugs() {
+    currentSearch = document.getElementById('search').value.toLowerCase();
+    render();
+  }
+
+  /* ── Render ─────────────────────────────────────────── */
+  function render() {
+    const filtered = drugs.filter(d => {
+      if (currentCategory !== 'all' && d.category !== currentCategory) return false;
+      if (!currentSearch) return true;
+      const haystack = [
+        d.name, d.cls, d.notes || '', d.recipe || '',
+        d.highlightContent || '',
+        ...d.doses.map(x => x.label + ' ' + x.value),
+      ].join(' ').toLowerCase();
+      return haystack.includes(currentSearch);
+    });
+
+    const grid      = document.getElementById('drug-grid');
+    const noResults = document.getElementById('no-results');
+    const count     = document.getElementById('result-count');
+
+    grid.innerHTML     = filtered.map(buildCard).join('');
+    noResults.style.display = filtered.length === 0 ? 'block' : 'none';
+    count.textContent  = filtered.length + ' drug' + (filtered.length !== 1 ? 's' : '');
+  }
+
+  /* ── Build card HTML ────────────────────────────────── */
+  function buildCard(d) {
+    const badge = `<span class="cat-badge badge-${d.category}">${CAT_LABEL[d.category]}</span>`;
+
+    const doseRows = d.doses.map(dose =>
+      `<div class="dose-row">
+         <div class="dose-label">${dose.label}</div>
+         <div class="dose-value">${dose.value}</div>
+       </div>`
+    ).join('');
+
+    const recipeHtml = d.recipe
+      ? `<div class="recipe-box">
+           <span class="recipe-label">Preparation / Recipe</span>
+           ${d.recipe}
+         </div>`
+      : '';
+
+    const highlightHtml = d.highlight
+      ? `<div class="highlight-box">
+           <div class="highlight-label">${d.highlightLabel}</div>
+           <div class="highlight-content">${d.highlightContent}</div>
+         </div>`
+      : '';
+
+    const notesHtml = d.notes
+      ? `<div class="notes">${d.notes}</div>`
+      : '';
+
+    return `
+      <div class="drug-card${d.highlight ? ' has-highlight' : ''}">
+        <div class="card-header">
+          <div>
+            <div class="drug-name">${d.name}</div>
+            <div class="drug-subclass">${d.cls}</div>
+          </div>
+          ${badge}
+        </div>
+        <div>
+          <div class="section-title">Doses</div>
+          ${doseRows}
+        </div>
+        ${recipeHtml}
+        ${highlightHtml}
+        ${notesHtml}
+      </div>`;
+  }
+
+  /* ── Init ───────────────────────────────────────────── */
+  render();
+</script>
+</body>
+</html>

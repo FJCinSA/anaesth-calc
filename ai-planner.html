@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Anaesthetic Planner — Anaesth-Calc ZA</title>
+  <style>
+    :root {
+      --primary:       #1d4ed8;
+      --primary-dark:  #1e3a8a;
+      --primary-light: #dbeafe;
+      --text:          #111827;
+      --text-muted:    #6b7280;
+      --border:        #e5e7eb;
+      --surface:       #ffffff;
+      --bg:            #f1f5f9;
+      --radius:        14px;
+      --shadow:        0 1px 4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    header {
+      background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #fff;
+      padding: 2rem 1.25rem 1.75rem;
+      text-align: center;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background .15s;
+    }
+    .header-badge:hover { background: rgba(255,255,255,.25); }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: .25rem .875rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-left: .5rem;
+    }
+
+    header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -.03em; }
+    header p   { font-size: .9rem; opacity: .75; margin-top: .3rem; }
+
+    /* ── Main ────────────────────────────────────────────── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.75rem 1rem 3rem;
+    }
+
+    /* ── Card ─────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.375rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: .68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── API Key section ─────────────────────────────────── */
+    #key-section { margin-bottom: 1rem; }
+
+    .key-set-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 10px;
+      padding: .75rem 1rem;
+    }
+
+    .key-set-left {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      font-size: .875rem;
+    }
+
+    .key-dot {
+      width: 8px;
+      height: 8px;
+      background: #16a34a;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .key-set-left strong { color: #166534; font-weight: 700; }
+    .key-set-left span   { color: #4b7c6b; font-size: .8rem; }
+
+    .key-change-btn {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: none;
+      border: 1.5px solid var(--primary-light);
+      border-radius: 7px;
+      padding: .3rem .7rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .key-change-btn:hover { background: var(--primary-light); }
+
+    .key-input-group {
+      display: flex;
+      gap: .5rem;
+    }
+
+    .key-input-group input {
+      flex: 1;
+      padding: .8rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: .9rem;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      letter-spacing: .05em;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .key-input-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+    }
+
+    .key-save-btn {
+      padding: .8rem 1.25rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: .875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .key-save-btn:hover { background: var(--primary-dark); }
+
+    .key-hint {
+      font-size: .74rem;
+      color: var(--text-muted);
+      margin-top: .5rem;
+      line-height: 1.5;
+    }
+
+    /* ── Textarea ────────────────────────────────────────── */
+    #patient-input {
+      width: 100%;
+      min-height: 130px;
+      padding: .875rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: .925rem;
+      color: var(--text);
+      resize: vertical;
+      line-height: 1.55;
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #patient-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+    }
+
+    /* ── Chips ───────────────────────────────────────────── */
+    .chip-group-label {
+      font-size: .68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--text-muted);
+      margin: .875rem 0 .4rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .375rem;
+    }
+
+    .chip {
+      padding: .275rem .7rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      font-size: .775rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .12s;
+      user-select: none;
+    }
+    .chip:hover  { border-color: var(--primary); color: var(--primary); }
+    .chip.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    /* ── Generate button ─────────────────────────────────── */
+    .generate-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .1s, opacity .15s;
+      box-shadow: 0 4px 16px rgba(29,78,216,.38);
+      letter-spacing: .02em;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .625rem;
+    }
+    .generate-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(29,78,216,.44);
+    }
+    .generate-btn:active:not(:disabled) { transform: translateY(0); }
+    .generate-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* ── Output card ─────────────────────────────────────── */
+    #output-section {
+      display: none;
+      animation: fadeUp .3s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .output-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .75rem;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    .output-model-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 20px;
+      padding: .2rem .65rem;
+    }
+
+    .copy-plan-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: none;
+      border: 1.5px solid var(--primary-light);
+      border-radius: 7px;
+      padding: .3rem .8rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .copy-plan-btn:hover { background: var(--primary-light); }
+    .copy-plan-btn.copied { color: #059669; border-color: #86efac; background: #ecfdf5; }
+
+    /* ── Plan output content ─────────────────────────────── */
+    #plan-output {
+      font-size: .88rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    #plan-output h3 {
+      font-size: .9rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin: 1.25rem 0 .4rem;
+      padding-bottom: .3rem;
+      border-bottom: 1.5px solid var(--primary-light);
+    }
+    #plan-output h3:first-child { margin-top: 0; }
+
+    #plan-output ul {
+      padding-left: 1.375rem;
+      margin: .3rem 0 .5rem;
+    }
+
+    #plan-output li { margin-bottom: .25rem; }
+
+    #plan-output p {
+      margin-bottom: .4rem;
+      color: var(--text);
+    }
+
+    #plan-output strong { color: var(--text); }
+
+    /* Streaming cursor */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--primary);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink .7s step-end infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Loading state */
+    .loading-dots {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      padding: 1.5rem 0;
+    }
+    .loading-dots span {
+      width: 7px;
+      height: 7px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: dot-bounce .9s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: .15s; }
+    .loading-dots span:nth-child(3) { animation-delay: .3s; }
+    @keyframes dot-bounce {
+      0%, 80%, 100% { transform: scale(.7); opacity: .5; }
+      40%           { transform: scale(1); opacity: 1; }
+    }
+
+    /* Error */
+    .error-box {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      border-radius: 9px;
+      padding: 1rem 1.125rem;
+      color: #991b1b;
+      font-size: .85rem;
+      line-height: 1.6;
+    }
+    .error-box strong { display: block; margin-bottom: .25rem; }
+
+    /* ── Disclaimer ───────────────────────────────────────── */
+    .disclaimer {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: var(--radius);
+      padding: 1.125rem 1.25rem;
+      font-size: .78rem;
+      color: #78350f;
+      line-height: 1.65;
+      margin-top: .5rem;
+    }
+
+    .disclaimer-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: 800;
+      font-size: .8rem;
+      color: #92400e;
+      margin-bottom: .375rem;
+    }
+
+    .warn-icon {
+      width: 18px;
+      height: 18px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.5rem; }
+      main { padding: 1.25rem .75rem 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <a class="header-badge" href="index.html">&#8592; Anaesth-Calc ZA</a>
+    <span class="ai-badge">AI-Powered</span>
+  </div>
+  <h1>Anaesthetic Planner</h1>
+  <p>Describe your patient and case &mdash; receive a structured anaesthetic plan</p>
+</header>
+
+<main>
+
+  <!-- ── API Key ──────────────────────────────────────────── -->
+  <div id="key-section">
+    <!-- shown when key is saved -->
+    <div id="key-set" style="display:none" class="key-set-display">
+      <div class="key-set-left">
+        <div class="key-dot"></div>
+        <div>
+          <strong>Anthropic API key saved</strong>
+          <span id="key-masked" style="display:block"></span>
+        </div>
+      </div>
+      <button class="key-change-btn" onclick="showKeyInput()">Change</button>
+    </div>
+
+    <!-- shown when no key / entering key -->
+    <div id="key-entry" class="card">
+      <div class="card-title">Anthropic API Key</div>
+      <div class="key-input-group">
+        <input type="password" id="key-input"
+               placeholder="sk-ant-…"
+               autocomplete="off" spellcheck="false">
+        <button class="key-save-btn" onclick="saveKey()">Save Key</button>
+      </div>
+      <p class="key-hint">
+        Your key is stored locally in your browser (localStorage) and sent only directly to
+        the Anthropic API. It is never transmitted to any other server.
+        Get a key at <strong>console.anthropic.com</strong>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Patient input ────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Patient &amp; Case</div>
+
+    <textarea id="patient-input"
+      placeholder="e.g. 68-year-old male, 85 kg, ASA III. Hypertension on amlodipine, well-controlled T2DM, mild OSA (CPAP at home). For elective right total knee replacement. No known allergies. Previous uneventful GA 10 years ago."
+      oninput="updateCharCount()"></textarea>
+
+    <div class="chip-group-label">Patient characteristics — click to add</div>
+    <div class="chips" id="patient-chips">
+      <button class="chip" onclick="addChip('Elderly (>70y)', this)">Elderly (&gt;70y)</button>
+      <button class="chip" onclick="addChip('Paediatric (<12y)', this)">Paediatric (&lt;12y)</button>
+      <button class="chip" onclick="addChip('Obese (BMI>35)', this)">Obese (BMI&gt;35)</button>
+      <button class="chip" onclick="addChip('OSA on CPAP', this)">OSA on CPAP</button>
+      <button class="chip" onclick="addChip('Suspected difficult airway', this)">Difficult Airway</button>
+      <button class="chip" onclick="addChip('Previous difficult intubation', this)">Prev. Difficult Intubation</button>
+      <button class="chip" onclick="addChip('IHD/angina', this)">IHD/Angina</button>
+      <button class="chip" onclick="addChip('CCF/LV dysfunction', this)">CCF/LV Dysfunction</button>
+      <button class="chip" onclick="addChip('Hypertension', this)">Hypertension</button>
+      <button class="chip" onclick="addChip('Atrial fibrillation', this)">AF</button>
+      <button class="chip" onclick="addChip('COPD', this)">COPD</button>
+      <button class="chip" onclick="addChip('Asthma', this)">Asthma</button>
+      <button class="chip" onclick="addChip('Type 2 diabetes', this)">T2DM</button>
+      <button class="chip" onclick="addChip('Type 1 diabetes', this)">T1DM</button>
+      <button class="chip" onclick="addChip('Chronic kidney disease', this)">CKD</button>
+      <button class="chip" onclick="addChip('Hepatic impairment', this)">Hepatic Impairment</button>
+      <button class="chip" onclick="addChip('Full stomach / GORD risk', this)">Full Stomach/GORD</button>
+      <button class="chip" onclick="addChip('Opioid tolerant / chronic pain', this)">Opioid Tolerant</button>
+      <button class="chip" onclick="addChip('Anxious patient', this)">Anxious Patient</button>
+      <button class="chip" onclick="addChip('Pregnant', this)">Pregnant</button>
+      <button class="chip" onclick="addChip('Anticoagulated', this)">Anticoagulated</button>
+      <button class="chip" onclick="addChip('Steroid-dependent', this)">Steroid-dependent</button>
+      <button class="chip" onclick="addChip('Known allergy to latex', this)">Latex Allergy</button>
+    </div>
+
+    <div class="chip-group-label">Procedure — click to add</div>
+    <div class="chips" id="procedure-chips">
+      <button class="chip" onclick="addChip('Day surgery (GA)', this)">Day Surgery GA</button>
+      <button class="chip" onclick="addChip('Day surgery (spinal)', this)">Day Surgery Spinal</button>
+      <button class="chip" onclick="addChip('Laparoscopic surgery (minor)', this)">Laparoscopic (minor)</button>
+      <button class="chip" onclick="addChip('Laparotomy', this)">Laparotomy</button>
+      <button class="chip" onclick="addChip('Colorectal surgery', this)">Colorectal</button>
+      <button class="chip" onclick="addChip('Hepatobiliary surgery', this)">Hepatobiliary</button>
+      <button class="chip" onclick="addChip('Orthopaedic surgery', this)">Orthopaedic</button>
+      <button class="chip" onclick="addChip('Total joint replacement', this)">Joint Replacement</button>
+      <button class="chip" onclick="addChip('Spinal surgery (instrumented)', this)">Spinal Surgery</button>
+      <button class="chip" onclick="addChip('ENT/head and neck surgery', this)">ENT / Head &amp; Neck</button>
+      <button class="chip" onclick="addChip('Thyroid surgery', this)">Thyroid</button>
+      <button class="chip" onclick="addChip('Gynaecological surgery', this)">Gynaecology</button>
+      <button class="chip" onclick="addChip('Caesarean section', this)">Caesarean Section</button>
+      <button class="chip" onclick="addChip('Urological surgery', this)">Urology</button>
+      <button class="chip" onclick="addChip('Vascular surgery (peripheral)', this)">Vascular (peripheral)</button>
+      <button class="chip" onclick="addChip('Major vascular / aortic surgery', this)">Vascular (aortic)</button>
+      <button class="chip" onclick="addChip('Neurosurgery', this)">Neurosurgery</button>
+      <button class="chip" onclick="addChip('Ophthalmic surgery', this)">Ophthalmic</button>
+      <button class="chip" onclick="addChip('Cardiac surgery (on-pump)', this)">Cardiac Surgery</button>
+      <button class="chip" onclick="addChip('Endoscopy/colonoscopy (sedation)', this)">Endoscopy / Sedation</button>
+    </div>
+
+    <button class="generate-btn" id="generate-btn" onclick="generatePlan()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      </svg>
+      Generate Anaesthetic Plan
+    </button>
+  </div>
+
+  <!-- ── Output ────────────────────────────────────────────── -->
+  <div id="output-section">
+    <div class="card">
+      <div class="output-meta">
+        <span class="output-model-pill">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+          </svg>
+          Claude Sonnet
+        </span>
+        <button class="copy-plan-btn" id="copy-plan-btn" onclick="copyPlan()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy Plan
+        </button>
+      </div>
+      <div id="plan-output"></div>
+    </div>
+  </div>
+
+  <!-- ── Disclaimer ───────────────────────────────────────── -->
+  <div class="disclaimer">
+    <div class="disclaimer-header">
+      <div class="warn-icon">!</div>
+      AI-Generated Content &mdash; Clinical Judgement Required
+    </div>
+    This plan is generated by a large language model and must be reviewed and verified by the
+    responsible anaesthesiologist before use. AI outputs may contain errors, omissions, or
+    dose inaccuracies. Always cross-reference with current guidelines, the patient's full clinical
+    picture, and your own expertise. This tool does not replace clinical assessment.
+  </div>
+
+</main>
+
+<script>
+  /* ── System prompt ──────────────────────────────────── */
+  const SYSTEM_PROMPT = `You are an expert anaesthesiologist specialising in South African private hospital practice, with deep knowledge of drugs, equipment, monitoring, and guidelines used in South African private hospitals (e.g. Netcare, Life Healthcare, Mediclinic). You assist qualified anaesthesiologists by generating concise, structured, practical anaesthetic plans.
+
+When given a patient description and planned procedure, generate a structured anaesthetic plan. Use only drugs available in South Africa. Where the patient's weight is given, express weight-based doses numerically. Where weight is not given, express doses as mg/kg or mcg/kg.
+
+Format your response using exactly these section headers (prefix each with ##):
+## Pre-op Assessment & Concerns
+## Premedication
+## Monitoring
+## Induction
+## Airway
+## Maintenance
+## Intraoperative Analgesia
+## Regional Techniques
+## Fluid Management
+## Emergence & Reversal
+## PONV Prophylaxis
+## Postoperative Analgesia
+## Special Considerations
+
+Rules:
+- Use bullet points within each section
+- Flag HIGH RISK items or important warnings in bold
+- Be concise and practical — this is a working plan, not a textbook
+- Use generic drug names; add common South African brand names in parentheses where helpful
+- If critical information is missing (e.g. weight, allergies), state your assumption clearly
+- Do not add any preamble or closing remarks — output only the structured plan sections`;
+
+  /* ── API Key management ─────────────────────────────── */
+  const KEY_STORAGE = 'anaesthcalc_anthropic_key';
+
+  function loadKey() {
+    const key = localStorage.getItem(KEY_STORAGE);
+    if (key && key.startsWith('sk-ant-')) {
+      showKeySet(key);
+    } else {
+      showKeyEntry();
+    }
+  }
+
+  function showKeySet(key) {
+    document.getElementById('key-set').style.display   = 'flex';
+    document.getElementById('key-entry').style.display = 'none';
+    const masked = key.slice(0, 12) + '•'.repeat(10) + key.slice(-4);
+    document.getElementById('key-masked').textContent  = masked;
+  }
+
+  function showKeyEntry() {
+    document.getElementById('key-set').style.display   = 'none';
+    document.getElementById('key-entry').style.display = 'block';
+  }
+
+  function showKeyInput() {
+    showKeyEntry();
+    document.getElementById('key-input').focus();
+  }
+
+  function saveKey() {
+    const val = document.getElementById('key-input').value.trim();
+    if (!val.startsWith('sk-ant-')) {
+      alert('Please enter a valid Anthropic API key (starts with sk-ant-).');
+      return;
+    }
+    localStorage.setItem(KEY_STORAGE, val);
+    document.getElementById('key-input').value = '';
+    showKeySet(val);
+  }
+
+  /* Allow Enter key to save */
+  document.getElementById('key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveKey();
+  });
+
+  /* ── Chip handling ──────────────────────────────────── */
+  function addChip(text, btn) {
+    btn.classList.toggle('active');
+    const ta = document.getElementById('patient-input');
+    if (btn.classList.contains('active')) {
+      const sep = ta.value.trim() && !ta.value.trim().endsWith(',') ? ', ' : '';
+      ta.value += (ta.value.trim() ? sep : '') + text;
+    } else {
+      /* remove the chip text from textarea */
+      const re = new RegExp(',?\\s*' + text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ',?\\s*', 'g');
+      ta.value = ta.value.replace(re, ' ').replace(/\s{2,}/g, ' ').trim();
+      if (ta.value.endsWith(',')) ta.value = ta.value.slice(0, -1).trim();
+    }
+    ta.focus();
+  }
+
+  /* ── Generate plan ──────────────────────────────────── */
+  let planRawText = '';
+
+  async function generatePlan() {
+    const key = localStorage.getItem(KEY_STORAGE);
+    if (!key) {
+      alert('Please enter and save your Anthropic API key first.');
+      document.getElementById('key-input').focus();
+      return;
+    }
+
+    const patient = document.getElementById('patient-input').value.trim();
+    if (!patient) {
+      alert('Please describe the patient and case before generating a plan.');
+      document.getElementById('patient-input').focus();
+      return;
+    }
+
+    /* UI — loading state */
+    const btn = document.getElementById('generate-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Generating\u2026';
+
+    const outSection = document.getElementById('output-section');
+    const planOutput = document.getElementById('plan-output');
+
+    outSection.style.display = 'block';
+    planOutput.innerHTML = `<div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>`;
+
+    outSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    planRawText = '';
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key':                              key,
+          'anthropic-version':                      '2023-06-01',
+          'content-type':                           'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model:      'claude-sonnet-4-6',
+          max_tokens: 2048,
+          stream:     true,
+          system:     SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: patient }
+          ],
+        }),
+      });
+
+      if (!resp.ok) {
+        let errMsg = `API error ${resp.status}`;
+        try {
+          const errBody = await resp.json();
+          if (errBody.error?.message) errMsg = errBody.error.message;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      /* Stream processing */
+      const reader  = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = '';
+      let   started = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); /* keep incomplete last line */
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' &&
+                parsed.delta?.type === 'text_delta') {
+              if (!started) {
+                planOutput.innerHTML = '';
+                started = true;
+              }
+              planRawText += parsed.delta.text;
+              planOutput.innerHTML = renderMarkdown(planRawText) +
+                '<span class="cursor"></span>';
+            }
+          } catch (_) { /* partial JSON — ignore */ }
+        }
+      }
+
+      /* Remove cursor when done */
+      planOutput.innerHTML = renderMarkdown(planRawText);
+
+    } catch (err) {
+      planOutput.innerHTML = `
+        <div class="error-box">
+          <strong>Failed to generate plan</strong>
+          ${err.message || 'An unexpected error occurred. Check your API key and network connection.'}
+        </div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      </svg> Generate Anaesthetic Plan`;
+    }
+  }
+
+  /* ── Markdown renderer ──────────────────────────────── */
+  function renderMarkdown(text) {
+    const lines  = text.split('\n');
+    let   html   = '';
+    let   inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.startsWith('## ')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<h3>${escHtml(line.slice(3).trim())}</h3>`;
+      } else if (/^[-*]\s/.test(line)) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += `<li>${formatInline(line.slice(2).trim())}</li>`;
+      } else if (line.trim() === '') {
+        if (inList) { html += '</ul>'; inList = false; }
+      } else {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<p>${formatInline(line)}</p>`;
+      }
+    }
+
+    if (inList) html += '</ul>';
+    return html;
+  }
+
+  function formatInline(text) {
+    return escHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  }
+
+  function escHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ── Copy plan ──────────────────────────────────────── */
+  async function copyPlan() {
+    if (!planRawText) return;
+    try {
+      await navigator.clipboard.writeText(planRawText);
+      const btn = document.getElementById('copy-plan-btn');
+      btn.textContent = '\u2713 Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg> Copy Plan`;
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch (_) {
+      alert('Copy failed. Please select and copy the plan text manually.');
+    }
+  }
+
+  /* ── Init ───────────────────────────────────────────── */
+  loadKey();
+</script>
+</body>
+</html>
